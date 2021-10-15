@@ -1,12 +1,17 @@
+import abc
+import collections
 import math
+from abc import ABC
+
 import pygame
 import random
 import GlobalValues
 from pygame import font
 from GameFlowHandler import RoundHandler
+from Particles import ParticleList
 from Player import Player
-from BasicEnemy import BasicEnemy, BasicEnemyParticle
-from Shockwave import Shockwave, ShockwaveList
+from BasicEnemy import BasicEnemy
+from Particles import Shockwave, ParticleList, BasicEnemyParticle
 from Store import Store
 from Structures import Core
 
@@ -27,6 +32,7 @@ empty_store_rect = pygame.Rect(260, 160, 1440, 760)
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 BasicEnemy_explosion_sound = pygame.mixer.Sound("SFX/BasicEnemyExplosion.wav")
+core_explosion_sound = pygame.mixer.Sound("SFX/CoreDeathSound.wav")
 #vroom = pygame.mixer.Sound("SFX/thruster.wav")
 
 #font stuff
@@ -34,7 +40,7 @@ pygame.font.init()
 font_36 = pygame.font.Font("Assets/manaspc.ttf", 36)
 font_50 = pygame.font.Font("Assets/manaspc.ttf", 50)
 
-def draw_window(player, core, enemy_list, particle_list, core_particle_list = None, shockwave_list = None):
+def draw_window(player, core, enemy_list, death_particle_list, core_particle_list = None, shockwave_list = None):
 
     WIN.blit(background, background_rect)
     WIN.blit(player.current_image, player.current_hitbox)
@@ -45,15 +51,16 @@ def draw_window(player, core, enemy_list, particle_list, core_particle_list = No
         __draw_core_death_particles(core_particle_list)
 
     if shockwave_list != None:
-        shockwave_list.draw_shockwaves(WIN)
-        shockwave_list.tick_all()
+        shockwave_list.tick()
+        shockwave_list.draw(WIN)
+
 
 
     __draw_experience(player)
     __draw_enemies(enemy_list)
     __draw_player_booster_particles(player.particles_booster_array)
-    __draw_death_particles(particle_list)
     __player_shot_drawer(player.projectiles_array)
+    death_particle_list.draw(WIN)
     pygame.display.update()
 
 
@@ -72,10 +79,10 @@ def __draw_enemies(enemies):
 
 def __player_shot_drawer(projectiles):
     for projectile in projectiles:
-        if 0 <= projectile.hitbox.x <= GlobalValues.WIDTH and 0 <= projectile.hitbox.y <= GlobalValues.HEIGHT:
+        if 0 <= projectile.hitbox.x <= GlobalValues.WIDTH and 0 <= projectile.hitbox.y <= GlobalValues.HEIGHT: #Also this
             WIN.blit(projectile.current_image, projectile.hitbox)
         else:
-            projectiles.remove(projectile)  #removes projectiles outside of the window
+            projectiles.remove(projectile)
             del projectile
 
 
@@ -109,7 +116,7 @@ def __draw_player_booster_particles(player_booster_particles):
         particle.timer -= 0.1
         rect = pygame.Rect(particle.posX, particle.posY, particle.timer, particle.timer)
         pygame.draw.rect(WIN, particle.color, rect)
-        if particle.timer <= 0:
+        if particle.timer <= 0: #Pass into lambda
             player_booster_particles.remove(particle)
             del particle
 
@@ -139,20 +146,20 @@ def __draw_death_particles(particle_list):
             del particle
 
 
-def movement_check_projectiles(player, enemies_list, particle_list):
+def movement_check_projectiles(player, enemies_list, death_particle_list):
     for projectile in player.projectiles_array:
         projectile.forward()
         for enemy in enemies_list:
             if projectile.hitbox.colliderect(enemy.current_hitbox):
                 if player.projectile_damage >= enemy.health:
-                    enemy_death(player, enemy, projectile, particle_list, enemies_list)
+                    enemy_death(player, enemy, projectile, death_particle_list, enemies_list)
                 else:
                     enemy.damage(player.projectile_damage)
                 if projectile in player.projectiles_array:
                     player.projectiles_array.remove(projectile)
 
 
-def enemy_death(player, enemy, projectile, particle_list, enemies_list):
+def enemy_death(player, enemy, projectile, death_particle_list, enemies_list):
     BasicEnemy_explosion_sound.play()
     player.grant_experience(80)
     if projectile is not None:
@@ -160,7 +167,7 @@ def enemy_death(player, enemy, projectile, particle_list, enemies_list):
             player.projectiles_array.remove(projectile)
 
     for particle_number in range(25):
-        particle_list.append(BasicEnemyParticle(enemy.posX, enemy.posY, 4))
+        death_particle_list.append(BasicEnemyParticle(enemy.posX, enemy.posY, 100))
 
     for i in range(player.modifier_on_death_shots):
         player.spawn_random_shot(enemy.posX, enemy.posY)
@@ -171,7 +178,7 @@ def enemy_death(player, enemy, projectile, particle_list, enemies_list):
 def main():
     player = Player(pygame.Rect(200, 200, DOT_SIDE, DOT_SIDE), 0)
     current_enemies_list = []
-    current_particle_list = []
+    death_particle_list = ParticleList(lambda time: time <= 0)
 
     store = Store()
     store.generate_store_supply()
@@ -247,7 +254,7 @@ def main():
                     is_shooting = False
                 if event.key == pygame.K_f:
                     current_enemies_list.append(BasicEnemy(player.posX, player.posY, CENTER, 25, 1, 1))
-
+        death_particle_list.tick()
         player.tick()
         if is_shooting:
             player.shoot()
@@ -255,12 +262,12 @@ def main():
         if game_flow.tick():
             current_enemies_list = game_flow.enemies_list
 
-        draw_window(player, core, current_enemies_list, current_particle_list)
+        draw_window(player, core, current_enemies_list, death_particle_list)
         movement_check_player(player, player_movement_rotation)
-        movement_check_enemies(current_enemies_list, core, player, current_particle_list)
-        movement_check_projectiles(player, current_enemies_list, current_particle_list)
+        movement_check_enemies(current_enemies_list, core, player, death_particle_list)
+        movement_check_projectiles(player, current_enemies_list, death_particle_list)
         if core.current_health <= 0:
-            core_death(player, core, current_enemies_list, current_particle_list, clock)
+            core_death(player, core, current_enemies_list, death_particle_list, clock)
             run = False
             dead = True
     pygame.quit()
@@ -312,34 +319,41 @@ def core_death(player, core, current_enemies_list, current_particle_list, clock)
 
     counter = 0
     core_death_particles = []
-    shockwave_list = ShockwaveList()
-    while counter < GlobalValues.FPS*5:     #5 second end screen
+    shockwave_list = ParticleList(lambda time: time >= 100)
+    run = True
+    while counter < GlobalValues.FPS*5 and run:     #5 second end screen
         clock.tick(GlobalValues.FPS)
-        for i in range(2):
-            new_particle = CoreExplosionParticle(core.current_hitbox.x, core.current_hitbox.y,
-                                                 15, 0, GlobalValues.RED_0)
-            core_death_particles.append(new_particle)
+
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    run = False
+
+        #TODO: Remake core death particles and smoke.
 
         if random.randint(1, 35) == 30:
             new_shockwave = Shockwave(960 + random.randint(0, 125), 540 + random.randint(0, 125))
-            shockwave_list.add_shockwave(new_shockwave)
+            shockwave_list.append(new_shockwave)
+            core_explosion_sound.play()
+
 
         draw_window(player, core, current_enemies_list, current_particle_list, core_death_particles, shockwave_list)
         counter += 1
     pygame.quit()
 
 
-class CoreExplosionParticle:
 
-    def __init__(self, posX, posY, timer, angle, color):
-        self.speed = 4
-        self.color = color
-        self.posX = posY + random.randint(0, 128)
-        self.posY = posX + random.randint(0, 128)
-        self.timer = timer + random.randint(-5, 5)
-        self.angle = angle + random.randint(0, 360)
-        self.color = random.choice([GlobalValues.BLUE_0, GlobalValues.BLUE_1,
-                                    GlobalValues.BLUE_2, GlobalValues.RED_0])
+
+
+
+
+
+
 
 
 

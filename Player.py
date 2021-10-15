@@ -20,8 +20,6 @@ class PlayerThrusterParticle:
 class Player:
     # TODO: clean this shit up
 
-    projectile_speed = 7
-    projectile_size = 0
 
     movement_forward = False
     movement_rotating = False
@@ -31,18 +29,12 @@ class Player:
     pygame.mixer.init()
     levelup_sound = pygame.mixer.Sound("SFX/levelup.wav")
 
-    BLUE_0 = (218, 242, 233)
-    BLUE_1 = (149, 224, 204)
-    BLUE_2 = (57, 112, 122)
-    BLUE_3 = (35, 73, 93)
-    BLUE_4 = (28, 38, 56)
-    RED_0 = (241, 78, 82)
-    RED_1 = (155, 34, 43)
+
 
     def __init__(self, hitbox, angle):
 
         #TODO: Add extra variable to remember the default values of the values modifed by cards.
-
+        self.projectile_speed = 7
         self.shoot_sound = pygame.mixer.Sound("SFX/shot.wav")
         self.level = 0
         self.experience = 0
@@ -85,7 +77,7 @@ class Player:
         pygame.font.init()
         self.font = pygame.font.Font("Assets/manaspc.ttf", 28)
         self.current_level_text = self.font.render(("LEVEL:" + str(self.level)), True,
-                                                    self.BLUE_0, self.BLUE_4)
+                                                    GlobalValues.BLUE_0, GlobalValues.BLUE_4)
         self.current_level_text_rect = self.current_level_text.get_rect()
         self.current_level_text_rect.center = (960, 36)
 
@@ -100,7 +92,7 @@ class Player:
             self.grant_experience(value)
             self.levelup_threshold += 10
             self.current_level_text = self.font.render(("LEVEL:" + str(self.level)), True,
-                                                       self.BLUE_0, self.BLUE_4)
+                                                       GlobalValues.BLUE_0, GlobalValues.BLUE_4)
             return True #levelup
         else:
             self.experience += amount

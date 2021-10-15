@@ -4,6 +4,7 @@ import os
 import random
 
 class BasicEnemyParticle:
+
     def __init__(self, posX, posY, timer):
         self.posX = posX
         self.posY = posY

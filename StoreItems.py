@@ -150,6 +150,31 @@ class ItemForwardSpeed(StoreItem):
     def description(self):
         return "Increases your forward speed by " + str(self.modifier * 100) + "%."
 
+class ItemProjectileSpeed(StoreItem):
+
+    def __init__(self):
+        super().__init__()
+        self.item_picture = pygame.image.load("Assets/ItemAttackSpeed.png").convert_alpha()
+
+        if self.rarity_value == 1:
+            self.modifier = 2
+        elif self.rarity_value == 2:
+            self.modifier = 4
+        elif self.rarity_value == 3:
+            self.modifier = 8
+        elif self.rarity_value == 4:
+            self.modifier = 16
+
+    def apply(self, player, core=None):
+        player.projectile_speed += self.modifier
+        print(player.projectile_speed)
+
+    def title(self):
+        return "Increased Projectile Speed"
+
+    def description(self):
+        return "Increases your Projectile Speed by " + str(self.modifier) + "."
+
 
 class KeyStoneAddedProjectiles(StoreItem):
 
