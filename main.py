@@ -41,33 +41,32 @@ font_36 = pygame.font.Font("Assets/manaspc.ttf", 36)
 font_50 = pygame.font.Font("Assets/manaspc.ttf", 50)
 
 
-def draw_window(player, core, enemy_list, death_particle_list, core_particle_list=None, shockwave_list=None,
-                core_death_smoke=None, core_death_particles=None):
+def draw_window(player, core, enemy_list, death_particle_list=None, core_death_particle_list=None, shockwave_list=None,
+                core_death_smoke=None):
 
     WIN.blit(background, background_rect)
     WIN.blit(player.current_image, player.current_hitbox)
     WIN.blit(core.current_image, core.current_hitbox)
     WIN.blit(core.current_health_text, core.current_health_rect)
 
-    if core_particle_list is not None:
-        __draw_core_death_particles(core_particle_list)
+    __draw_player_booster_particles(player.particles_booster_array) #would take quite a bit of effort to use ParticleList for this
+    __player_shot_drawer(player.projectiles_array) # ^^ same for this
+    __draw_experience(player)
+    __draw_enemies(enemy_list)
 
     if core_death_smoke is not None:
         core_death_smoke.draw(WIN)
 
-    if core_death_particles is not None:
-        core_death_particles.draw(WIN)
+    if core_death_particle_list is not None:
+        core_death_particle_list.draw(WIN)
 
     if shockwave_list is not None:
         shockwave_list.draw(WIN)
 
-    __draw_experience(player)
-    __draw_enemies(enemy_list)
-    __draw_player_booster_particles(player.particles_booster_array)
-    __player_shot_drawer(player.projectiles_array)
-    death_particle_list.draw(WIN)
-    pygame.display.update()
+    if death_particle_list is not None:
+        death_particle_list.draw(WIN)
 
+    pygame.display.update()
 
 def __draw_experience(player):
     p = float(player.experience / player.levelup_threshold) + 0.001
@@ -123,31 +122,6 @@ def __draw_player_booster_particles(player_booster_particles):
         pygame.draw.rect(WIN, particle.color, rect)
         if particle.timer <= 0: #Pass into lambda
             player_booster_particles.remove(particle)
-            del particle
-
-
-def __draw_core_death_particles(particle_list):
-    for particle in particle_list:
-        particle.timer -= 0.2
-        particle.posX -= math.cos(math.radians(particle.angle))*particle.speed
-        particle.posY -= math.sin(math.radians(particle.angle))*particle.speed
-        rect = pygame.Rect(particle.posY, particle.posX, particle.timer, particle.timer)
-        pygame.draw.rect(WIN, particle.color, rect)
-        if particle.timer <= 0:
-            particle_list.remove(particle)
-            del particle
-
-
-def __draw_death_particles(particle_list):
-    for particle in particle_list:
-        particle.posX += particle.speedX
-        particle.posY += particle.speedY
-        particle.timer -= 0.1
-        color = random.choice([GlobalValues.BLUE_0, GlobalValues.BLUE_1, GlobalValues.BLUE_2, GlobalValues.RED_0])
-        rect = pygame.Rect(particle.posY, particle.posX, particle.timer, particle.timer)
-        pygame.draw.rect(WIN, color, rect)
-        if particle.timer <= 0:
-            particle_list.remove(particle)
             del particle
 
 
@@ -337,7 +311,6 @@ def core_death(player, core, current_enemies_list, current_particle_list, clock)
             if event.type == pygame.QUIT:
                 run = False
 
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     run = False
@@ -355,12 +328,10 @@ def core_death(player, core, current_enemies_list, current_particle_list, clock)
         core_explosion_particle_list.tick()
         shockwave_list.tick()
         smoke_particle_list.tick()
-        draw_window(player, core, current_enemies_list, current_particle_list, core_death_particles, shockwave_list,
-                    smoke_particle_list, core_explosion_particle_list)
+        draw_window(player, core, current_enemies_list, current_particle_list, core_explosion_particle_list, shockwave_list,
+                    smoke_particle_list)
         counter += 1
     pygame.quit()
-
-
 
 
 if __name__ == "__main__":

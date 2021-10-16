@@ -112,6 +112,10 @@ class CoreExplosionSmoke:
         self.posY += self.speed * math.sin(math.radians(self.angle))
 
 
+#class CoreCollisionParticle:
+
+#class
+
 class CoreExplosionParticle:
     def __init__(self):
         self.color = random.choice((GlobalValues.RED_1, GlobalValues.RED_0, GlobalValues.BLUE_2))
