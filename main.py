@@ -8,7 +8,7 @@ import random
 import GlobalValues
 from pygame import font
 from GameFlowHandler import RoundHandler
-from Particles import ParticleList
+from Particles import ParticleList, CoreExplosionSmoke, CoreExplosionParticle
 from Player import Player
 from BasicEnemy import BasicEnemy
 from Particles import Shockwave, ParticleList, BasicEnemyParticle
@@ -40,21 +40,26 @@ pygame.font.init()
 font_36 = pygame.font.Font("Assets/manaspc.ttf", 36)
 font_50 = pygame.font.Font("Assets/manaspc.ttf", 50)
 
-def draw_window(player, core, enemy_list, death_particle_list, core_particle_list = None, shockwave_list = None):
+
+def draw_window(player, core, enemy_list, death_particle_list, core_particle_list=None, shockwave_list=None,
+                core_death_smoke=None, core_death_particles=None):
 
     WIN.blit(background, background_rect)
     WIN.blit(player.current_image, player.current_hitbox)
     WIN.blit(core.current_image, core.current_hitbox)
     WIN.blit(core.current_health_text, core.current_health_rect)
 
-    if core_particle_list != None:
+    if core_particle_list is not None:
         __draw_core_death_particles(core_particle_list)
 
-    if shockwave_list != None:
-        shockwave_list.tick()
+    if core_death_smoke is not None:
+        core_death_smoke.draw(WIN)
+
+    if core_death_particles is not None:
+        core_death_particles.draw(WIN)
+
+    if shockwave_list is not None:
         shockwave_list.draw(WIN)
-
-
 
     __draw_experience(player)
     __draw_enemies(enemy_list)
@@ -320,6 +325,9 @@ def core_death(player, core, current_enemies_list, current_particle_list, clock)
     counter = 0
     core_death_particles = []
     shockwave_list = ParticleList(lambda time: time >= 100)
+    smoke_particle_list = ParticleList(lambda time: time >= 80)
+    core_explosion_particle_list = ParticleList(lambda time: time >= 50)
+
     run = True
     while counter < GlobalValues.FPS*5 and run:     #5 second end screen
         clock.tick(GlobalValues.FPS)
@@ -334,25 +342,23 @@ def core_death(player, core, current_enemies_list, current_particle_list, clock)
                 if event.key == pygame.K_ESCAPE:
                     run = False
 
-        #TODO: Remake core death particles and smoke.
+        core_explosion_particle_list.append(CoreExplosionParticle())
+
+        if random.randint(1, 2) == 1:
+            smoke_particle_list.append(CoreExplosionSmoke())
 
         if random.randint(1, 35) == 30:
             new_shockwave = Shockwave(960 + random.randint(0, 125), 540 + random.randint(0, 125))
             shockwave_list.append(new_shockwave)
             core_explosion_sound.play()
 
-
-        draw_window(player, core, current_enemies_list, current_particle_list, core_death_particles, shockwave_list)
+        core_explosion_particle_list.tick()
+        shockwave_list.tick()
+        smoke_particle_list.tick()
+        draw_window(player, core, current_enemies_list, current_particle_list, core_death_particles, shockwave_list,
+                    smoke_particle_list, core_explosion_particle_list)
         counter += 1
     pygame.quit()
-
-
-
-
-
-
-
-
 
 
 

@@ -48,6 +48,7 @@ class Shockwave:
         pygame.draw.circle(WIN, self.color, (self.pos_x, self.pos_y), self.size, int((101 - self.time) / 0.8))
         print(int((101 - self.time) / 3))
 
+
 class BasicEnemyParticle:
 
     def __init__(self, posX, posY, timer):
@@ -69,8 +70,6 @@ class BasicEnemyParticle:
         pygame.draw.rect(WIN, self.color, rect)
 
 
-
-
 class PlayerThrusterParticle:
 
     def __init__(self, posX, posY, timer, angle, player_speed, color):
@@ -90,15 +89,46 @@ class PlayerThrusterParticle:
         rect = pygame.Rect(self.posX, self.posY, self.timer, self.timer)
         pygame.draw.rect(WIN, self.color, rect)
 
+
 class CoreExplosionSmoke:
     def __init__(self):
         self.color = GlobalValues.BLUE_1
         self.angle = random.randint(0, 360)
-        self.size = random.randint(100, 600)
-        self.speed = 10
+        self.size = random.randint(10, 30)
+        self.speed = 2
         self.posX = random.randint(960 - 100, 960 + 100)
         self.posY = random.randint(540 - 100, 540 + 100)
-        self.time = 100
+        self.time = 0
+
+    def tick(self):
+        self.forward()
+        self.time += 1
+
+    def draw(self, WIN):
+        pygame.draw.circle(WIN, self.color, (self.posX, self.posY), self.size + self.time)
+
+    def forward(self):
+        self.posX += self.speed * math.cos(math.radians(self.angle))
+        self.posY += self.speed * math.sin(math.radians(self.angle))
+
+
+class CoreExplosionParticle:
+    def __init__(self):
+        self.color = random.choice((GlobalValues.RED_1, GlobalValues.RED_0, GlobalValues.BLUE_2))
+        self.angle = random.randint(0, 360)
+        self.size = 10
+        self.speed = 2
+        self.posX = random.randint(960 - 100, 960 + 100)
+        self.posY = random.randint(540 - 100, 540 + 100)
+        self.time = 0
+
+    def tick(self):
+        self.forward()
+        self.time += 1
+
+    def draw(self, WIN):
+        rect = pygame.Rect(self.posX, self.posY, self.size, self.size)
+        pygame.draw.rect(WIN, self.color, rect)
 
     def forward(self):
         self.posX += self.speed * math.cos(math.radians(self.angle))
