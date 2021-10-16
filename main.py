@@ -293,6 +293,17 @@ def open_empty_buy_menu(WIN):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_b:
                 return
 
+#TODO: Disable checking collisions during core_death, since it causes performance issues.
+
+#TODO: Add a unique sound for an enemy colliding with the core
+
+#TODO: Add a sound for opening an empty shop
+
+#TODO: Add a sound for opening the shop when filled
+
+#TODO: New level up sound?
+
+#TODO: New shockwave sound?
 
 def core_death(player, core, current_enemies_list, current_particle_list, clock):
 

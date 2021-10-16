@@ -112,9 +112,7 @@ class CoreExplosionSmoke:
         self.posY += self.speed * math.sin(math.radians(self.angle))
 
 
-#class CoreCollisionParticle:
-
-#class
+#TODO: class CoreCollisionParticle:
 
 class CoreExplosionParticle:
     def __init__(self):
