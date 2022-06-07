@@ -3,24 +3,11 @@ import os
 import random
 import GlobalValues
 import pygame
-from PlayerShot import PlayerShot
-
-
-class PlayerThrusterParticle:
-
-    def __init__(self, posX, posY, timer, angle, player_speed, color):
-        self.color = color
-        self.posX = posX - math.cos(math.radians(angle))*35
-        self.posY = posY - math.sin(math.radians(angle))*35
-        self.timer = timer + random.randint(-7, 7)
-        self.angle = angle + random.randint(-40, 40)
-        self.player_speed = player_speed
+from Particles import PlayerShot, PlayerThrusterParticle
 
 
 class Player:
     # TODO: clean this shit up
-
-
     movement_forward = False
     movement_rotating = False
     movement_reverse = False
@@ -28,8 +15,6 @@ class Player:
     pygame.mixer.pre_init(44100, -16, 2, 512)
     pygame.mixer.init()
     levelup_sound = pygame.mixer.Sound("SFX/levelup.wav")
-
-
 
     def __init__(self, hitbox, angle):
 
@@ -61,7 +46,6 @@ class Player:
         self.particles_booster_array = []
 
         self.default_projectile_fire_rate = 0.5
-
         self.modifier_attack_speed = 1
         self.modifier_movement_speed = 1
         self.modifier_rotation_speed = 1
@@ -127,8 +111,32 @@ class Player:
                 self.fire_rate_counter = int(self.projectile_fire_rate * GlobalValues.FPS)
 
     def tick(self):
+        for projectile in self.projectiles_array:
+            if not projectile.tick():
+                del projectile
+
+        for booster in self.particles_booster_array:
+            booster.tick()
+
         if self.fire_rate_counter > 0:
             self.fire_rate_counter -= 1
+
+    def draw(self, WIN):
+        WIN.blit(self.current_image, self.current_hitbox)
+        for projectile in self.projectiles_array:
+            projectile.draw(WIN)
+
+        for particle in self.particles_booster_array:
+            rect = pygame.Rect(particle.posX, particle.posY, particle.timer, particle.timer)
+            pygame.draw.rect(WIN, particle.color, rect)
+            if particle.timer <= 0:
+                self.particles_booster_array.remove(particle)
+                del particle
+
+        percentage = float(self.experience / self.levelup_threshold) + 0.001
+        width_pixels = int(percentage * 1920)
+        pygame.draw.rect(WIN, GlobalValues.BLUE_0, pygame.Rect(0, 0, width_pixels, 16))
+        WIN.blit(self.current_level_text, self.current_level_text_rect)
 
     def spawn_random_shot(self, posX, posY):    #ugly af
         shot = PlayerShot(self)
