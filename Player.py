@@ -3,7 +3,7 @@ import os
 import random
 import GlobalValues
 import pygame
-from Particles import PlayerShot, PlayerThrusterParticle
+from Particles import PlayerShot, PlayerThrusterParticle, ParticleList
 
 
 class Player:
@@ -18,14 +18,14 @@ class Player:
 
     def __init__(self, hitbox, angle):
 
-        #TODO: Add extra variable to remember the default values of the values modifed by cards.
+        # TODO: Add extra variable to remember the default values of the values modified by cards.
         self.projectile_speed = 7
         self.shoot_sound = pygame.mixer.Sound("SFX/shot.wav")
         self.level = 0
         self.experience = 0
         self.levelup_threshold = 100
-        self.__coefficient = self.experience/self.levelup_threshold
-        self.experience_bar_rect = pygame.Rect(0, 0, self.__coefficient*1920, 16)
+        self.__coefficient = self.experience / self.levelup_threshold
+        self.experience_bar_rect = pygame.Rect(0, 0, self.__coefficient * 1920, 16)
         self.skill_points = 0
         self.projectile_damage = 50
         self.crash_damage = 1
@@ -43,8 +43,7 @@ class Player:
         self.posY = hitbox.y
         self.health_max = 100
         self.health_current = self.health_max
-        self.particles_booster_array = []
-
+        self.particles_booster_array = ParticleList(lambda time: time <= 0)
         self.default_projectile_fire_rate = 0.5
         self.modifier_attack_speed = 1
         self.modifier_movement_speed = 1
@@ -61,7 +60,7 @@ class Player:
         pygame.font.init()
         self.font = pygame.font.Font("Assets/manaspc.ttf", 28)
         self.current_level_text = self.font.render(("LEVEL:" + str(self.level)), True,
-                                                    GlobalValues.BLUE_0, GlobalValues.BLUE_4)
+                                                   GlobalValues.BLUE_0, GlobalValues.BLUE_4)
         self.current_level_text_rect = self.current_level_text.get_rect()
         self.current_level_text_rect.center = (960, 36)
 
@@ -71,16 +70,16 @@ class Player:
         if amount + self.experience >= self.levelup_threshold:
             self.level += 1
             self.skill_points += 1
-            value = amount + self.experience - self.levelup_threshold #must be calculated before setting exp
+            value = amount + self.experience - self.levelup_threshold  # must be calculated before setting exp
             self.experience = 0
             self.grant_experience(value)
             self.levelup_threshold += 10
             self.current_level_text = self.font.render(("LEVEL:" + str(self.level)), True,
                                                        GlobalValues.BLUE_0, GlobalValues.BLUE_4)
-            return True #levelup
+            return True  # levelup
         else:
             self.experience += amount
-            return False #didn't level up
+            return False  # no level up
 
     def rotate(self, amount):
         self.current_image = pygame.transform.rotozoom(self.__default_image, -(amount + self.angle), 1)
@@ -115,8 +114,7 @@ class Player:
             if not projectile.tick():
                 del projectile
 
-        for booster in self.particles_booster_array:
-            booster.tick()
+        self.particles_booster_array.tick()
 
         if self.fire_rate_counter > 0:
             self.fire_rate_counter -= 1
@@ -126,19 +124,14 @@ class Player:
         for projectile in self.projectiles_array:
             projectile.draw(WIN)
 
-        for particle in self.particles_booster_array:
-            rect = pygame.Rect(particle.posX, particle.posY, particle.timer, particle.timer)
-            pygame.draw.rect(WIN, particle.color, rect)
-            if particle.timer <= 0:
-                self.particles_booster_array.remove(particle)
-                del particle
+        self.particles_booster_array.draw(WIN)
 
         percentage = float(self.experience / self.levelup_threshold) + 0.001
         width_pixels = int(percentage * 1920)
         pygame.draw.rect(WIN, GlobalValues.BLUE_0, pygame.Rect(0, 0, width_pixels, 16))
         WIN.blit(self.current_level_text, self.current_level_text_rect)
 
-    def spawn_random_shot(self, posX, posY):    #ugly af
+    def spawn_random_shot(self, posX, posY):  # ugly af
         shot = PlayerShot(self)
         shot.randomize_angle()
         shot.posX = posY

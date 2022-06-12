@@ -5,7 +5,7 @@ import pygame
 import os
 
 
-# Class used for containing particles. Has a draw method to draw all particles in the list.
+# Class used for containing time-dependant particles. Has a draw method to draw all particles in the list.
 # Pass in the deletion condition for a particle in the init.
 class ParticleList:
 
@@ -21,7 +21,7 @@ class ParticleList:
             particle.tick()
             if self.delete_condition(particle.time):
                 self.list.remove(particle)
-                del (particle)
+                del particle
 
     def draw(self, WIN):
         for particle in self.list:
@@ -77,7 +77,6 @@ class PlayerShot:
 
     def randomize_angle(self):
         self.angle = random.random() * 360
-        print(self.angle)
         self.current_image = pygame.transform.rotozoom(self.__PLAYER_SHOT_IMAGE, -self.angle, 1)
 
     def draw(self, WIN):
@@ -90,17 +89,17 @@ class PlayerThrusterParticle:
         self.color = color
         self.posX = posX - math.cos(math.radians(angle)) * 35
         self.posY = posY - math.sin(math.radians(angle)) * 35
-        self.timer = timer + random.randint(-7, 7)
+        self.time = timer + random.randint(-7, 7)
         self.angle = angle + random.randint(-40, 40)
         self.player_speed = player_speed
 
     def tick(self):
         self.posX -= math.cos(math.radians(self.angle)) * 2 * (self.player_speed * 0.25)
         self.posY -= math.sin(math.radians(self.angle)) * 2 * (self.player_speed * 0.25)
-        self.timer -= 0.1
+        self.time -= 0.1
 
     def draw(self, WIN):
-        rect = pygame.Rect(self.posX, self.posY, self.timer, self.timer)
+        rect = pygame.Rect(self.posX, self.posY, self.time, self.time)
         pygame.draw.rect(WIN, self.color, rect)
 
 

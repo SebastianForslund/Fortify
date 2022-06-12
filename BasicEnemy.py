@@ -2,6 +2,7 @@ import math
 import pygame
 import os
 
+from Particles import BasicEnemyParticle
 
 class BasicEnemy:
     __default_image = pygame.image.load(os.path.join('Assets', 'basicEnemy.png'))
@@ -14,9 +15,9 @@ class BasicEnemy:
         self.posX = posY  # dont ask why this works
         self.posY = posX  # dont ask why this works
         self.experience = 10
-        targetX = target[0]
-        targetY = target[1]
-        rad = math.atan2(targetX - posX, targetY - posY)
+        target_x = target[0]
+        target_y = target[1]
+        rad = math.atan2(target_x - posX, target_y - posY)
         self.rad = rad
         self.current_image = self.__default_image
         self.core_damage = damage
@@ -43,3 +44,17 @@ class BasicEnemy:
     def draw(self, WIN):
         WIN.blit(self.current_image, self.current_hitbox)
         self.__draw_health_bar(WIN)
+
+    def death(self, player, projectile, death_particle_list, enemies_list, death_sound):
+        death_sound.play()
+        player.grant_experience(80)
+        if projectile is not None and projectile in player.projectiles_array:
+            player.projectiles_array.remove(projectile)
+
+        for particle_number in range(25):
+            death_particle_list.append(BasicEnemyParticle(self.posX, self.posY, 100))
+
+        for i in range(player.modifier_on_death_shots):
+            player.spawn_random_shot(self.posX, self.posY)
+        if self in enemies_list:
+            enemies_list.remove(self)
