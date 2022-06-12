@@ -6,9 +6,8 @@ from abc import ABC
 import pygame
 import random
 import GlobalValues
-from pygame import font
 from GameFlowHandler import RoundHandler
-from Particles import ParticleList, CoreExplosionSmoke, CoreExplosionParticle
+from Particles import CoreExplosionSmoke, CoreExplosionParticle
 from Player import Player
 from BasicEnemy import BasicEnemy
 from Particles import Shockwave, ParticleList, BasicEnemyParticle
@@ -31,6 +30,7 @@ empty_store_rect = pygame.Rect(260, 160, 1440, 760)
 # sound stuff
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
+player_forward_sound = pygame.mixer.Sound("SFX/thruster3.wav")
 BasicEnemy_explosion_sound = pygame.mixer.Sound("SFX/BasicEnemyExplosion.wav")
 core_explosion_sound = pygame.mixer.Sound("SFX/CoreDeathSound.wav")
 # vroom = pygame.mixer.Sound("SFX/thruster.wav")
@@ -51,6 +51,9 @@ def draw_window(player, core, enemy_list, death_particle_list=None, core_death_p
     for enemy in enemy_list:
         enemy.draw(WIN)
 
+    if death_particle_list is not None:
+        death_particle_list.draw(WIN)
+
     if core_death_smoke is not None:
         core_death_smoke.draw(WIN)
 
@@ -60,11 +63,7 @@ def draw_window(player, core, enemy_list, death_particle_list=None, core_death_p
     if shockwave_list is not None:
         shockwave_list.draw(WIN)
 
-    if death_particle_list is not None:
-        death_particle_list.draw(WIN)
-
     pygame.display.update()
-
 
 
 def movement_handler_enemies(enemies_list, core, player, particle_list):
@@ -75,50 +74,31 @@ def movement_handler_enemies(enemies_list, core, player, particle_list):
             enemies_list.remove(enemy)
         if enemy.current_hitbox.colliderect(player.current_hitbox):
             if player.crash_damage > enemy.health:
-                enemy_death(player, enemy, None, particle_list, enemies_list)
+                enemy.death(player, None, particle_list, enemies_list, BasicEnemy_explosion_sound)
             else:
                 enemy.damage(player.crash_damage)
 
 
 def movement_handler_player(player, rotation):
     if player.movement_forward:
-        # TODO: thruster movement sound
         player.forward()
+        if not pygame.mixer.get_busy():
+            player_forward_sound.play()
     if player.movement_reverse:
         player.reverse()
     player.rotate(rotation)
 
-
-#   TODO: Osäker på om detta borde finnas här
 
 def movement_check_projectiles(player, enemies_list, death_particle_list):
     for projectile in player.projectiles_array:
         for enemy in enemies_list:
             if projectile.hitbox.colliderect(enemy.current_hitbox):
                 if player.projectile_damage >= enemy.health:
-                    enemy_death(player, enemy, projectile, death_particle_list, enemies_list)
+                    enemy.death(player, projectile, death_particle_list, enemies_list, BasicEnemy_explosion_sound)
                 else:
                     enemy.damage(player.projectile_damage)
                 if projectile in player.projectiles_array:
                     player.projectiles_array.remove(projectile)
-
-#   TODO:   Osäker på om detta borde finnas här
-
-
-def enemy_death(player, enemy, projectile, death_particle_list, enemies_list):
-    BasicEnemy_explosion_sound.play()
-    player.grant_experience(80)
-    if projectile is not None:
-        if projectile in player.projectiles_array:
-            player.projectiles_array.remove(projectile)
-
-    for particle_number in range(25):
-        death_particle_list.append(BasicEnemyParticle(enemy.posX, enemy.posY, 100))
-
-    for i in range(player.modifier_on_death_shots):
-        player.spawn_random_shot(enemy.posX, enemy.posY)
-    if enemy in enemies_list:
-        enemies_list.remove(enemy)
 
 
 def main():
@@ -170,6 +150,9 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     player.movement_forward = True
+                    # Having this here is not really optimal, since i have a plaer movement handler...
+                    if not pygame.mixer.get_busy():
+                        player_forward_sound.play()
                 if event.key == pygame.K_s:
                     player.movement_reverse = True
                 if event.key == pygame.K_d:
@@ -190,6 +173,9 @@ def main():
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_w:
                     player.movement_forward = False
+                    player_forward_sound.stop()
+                    # Having this here is not really optimal, since i have a player movement handler...
+
                 if event.key == pygame.K_d:
                     player_movement_rotation += -player.rotate_speed
                 if event.key == pygame.K_a:
@@ -275,7 +261,6 @@ def open_empty_buy_menu(WIN):
 
 def core_death(player, core, current_enemies_list, current_particle_list, clock):
     counter = 0
-    core_death_particles = []
     shockwave_list = ParticleList(lambda time: time >= 100)
     smoke_particle_list = ParticleList(lambda time: time >= 80)
     core_explosion_particle_list = ParticleList(lambda time: time >= 50)
