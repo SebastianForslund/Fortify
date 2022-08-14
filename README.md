@@ -12,5 +12,4 @@ Fortify is a...
   *
 
 
-link to demo:
-![Link to demo](https://youtu.be/LSdocJUmJMI)
+![Short Youtube video showcase](https://youtu.be/LSdocJUmJMI)
