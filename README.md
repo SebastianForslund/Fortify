@@ -11,6 +11,5 @@ Features include:
 
   * Infinite waves of attacking enemies.
 
-![Short Youtube video showcase](https://youtu.be/LSdocJUmJMI)
-
+https://user-images.githubusercontent.com/78153968/184539193-06742d03-0596-4102-a19d-ee3d57b7bd51.mp4
 
