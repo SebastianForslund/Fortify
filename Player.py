@@ -7,7 +7,6 @@ from Particles import PlayerShot, PlayerThrusterParticle, ParticleList
 
 
 class Player:
-    # TODO: clean this shit up
     movement_forward = False
     movement_rotating = False
     movement_reverse = False
