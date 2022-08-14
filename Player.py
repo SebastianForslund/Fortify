@@ -130,7 +130,7 @@ class Player:
         pygame.draw.rect(WIN, GlobalValues.BLUE_0, pygame.Rect(0, 0, width_pixels, 16))
         WIN.blit(self.current_level_text, self.current_level_text_rect)
 
-    def spawn_random_shot(self, posX, posY):  # ugly af
+    def spawn_random_shot(self, posX, posY):
         shot = PlayerShot(self)
         shot.randomize_angle()
         shot.posX = posY
